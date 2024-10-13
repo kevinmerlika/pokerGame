@@ -121,6 +121,28 @@ public fold(socket: Socket) {
     }
 }
 
+public getBalanceOfUser(socket: Socket) {
+    const player = this.game.getPlayer(socket.id);
+    console.log("Player found "+ player?.name);
+    
+    socket.emit('balanceUpdated', player?.chips);
+}
+
+public getPlayerName(socket: Socket) {
+    // Retrieve the player associated with the socket ID
+    const player = this.game.getPlayer(socket.id);
+    
+    // Log the player object or null if not found
+    console.log("Player found on PlayerName method: ", player?.name);
+    
+    // Emit the player's name back to the specific socket
+    if (player) {
+        socket.emit('playerName', player?.name); // Emit the name if player exists
+    } else {
+        console.error(`Player not found for socket ID: ${socket.id}`); // Log an error if player not found
+        socket.emit('playerName', null); // Emit null if no player found
+    }
+}
 
 
     public dealCards(socket: Socket) {

@@ -12,7 +12,10 @@
     <div id="playerHands"></div>
     <div id="communityCards"></div>
 
-    <h2>Total Pot: <span id="totalPot">0</span></h2> <!-- Total Pot Display -->
+    <h2>Total Pot: <span id="totalPot">0</span></h2>
+    <h2>Player Balance: <span id="balance">0</span></h2>
+    <h2>Player Name: <span id="playerName">emri</span></h2>
+
 
     <input type="number" id="betAmountInput" placeholder="Enter bet amount" />
     <button id="betButton">Place Bet</button>
@@ -28,10 +31,21 @@
             socket.emit("joinGame", playerName);
         }
 
-       // Update total pot when it changes
-    socket.on("totalPotUpdated", (totalPot) => {
-        document.getElementById("totalPot").textContent = totalPot; // Update total pot in the UI
-    });
+        // Update total pot when it changes
+        socket.on("totalPotUpdated", (totalPot) => {
+            document.getElementById("totalPot").textContent = totalPot; // Update total pot in the UI
+        });
+
+        // Listen for balance updates
+        socket.on("balanceUpdated", (balance) => {
+            document.getElementById("balance").textContent = balance; // Update balance in the UI
+        });
+
+        
+        // Listen for balance updates
+        socket.on("playerName", (playerName) => {
+            document.getElementById("playerName").textContent = playerName; // Update balance in the UI
+        });
 
         socket.on("playerJoined", (playerName) => {
             const message = document.createElement("p");
@@ -45,11 +59,9 @@
             document.getElementById("messages").appendChild(message);
         });
 
-        // Add additional socket event handlers here for call, raise, fold, etc.
-
         const betButton = document.getElementById("betButton");
         const betAmountInput = document.getElementById("betAmountInput");
-        
+
         betButton.onclick = () => {
             const betAmount = parseInt(betAmountInput.value);
             if (!isNaN(betAmount) && betAmount > 0) {
@@ -81,27 +93,22 @@
             socket.emit("fold");
         };
 
+        socket.on("gameEnded", ({ winner, pot }) => {
+            const message = document.createElement("p");
+            message.textContent = `${winner} won the pot of ${pot}. The game will restart soon.`;
+            document.getElementById("messages").appendChild(message);
+        });
 
-        // Listen for the game end and restart automatically
-    socket.on("gameEnded", ({ winner, pot }) => {
-        const message = document.createElement("p");
-        message.textContent = `${winner} won the pot of ${pot}. The game will restart soon.`;
-        document.getElementById("messages").appendChild(message);
-    });
+        socket.on("gameRestarted", () => {
+            const message = document.createElement("p");
+            message.textContent = `The game has restarted.`;
+            document.getElementById("messages").appendChild(message);
 
-
-         // Handle game restarting
-    socket.on("gameRestarted", () => {
-        const message = document.createElement("p");
-        message.textContent = `The game has restarted.`;
-        document.getElementById("messages").appendChild(message);
-
-        // Clear hands and community cards for a fresh start
-        document.getElementById("playerHands").innerHTML = '';
-        document.getElementById("communityCards").innerHTML = '';
-        document.getElementById("totalPot").textContent = '0';
-    });
-        
+            // Clear hands and community cards for a fresh start
+            document.getElementById("playerHands").innerHTML = '';
+            document.getElementById("communityCards").innerHTML = '';
+            document.getElementById("totalPot").textContent = '0';
+        });
 
         socket.on("cardsDealt", ({ players, communityCards }) => {
             document.getElementById("playerHands").innerHTML = '';
