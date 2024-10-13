@@ -7,10 +7,10 @@ class DBConnection {
     // Private constructor to prevent instantiation
     private constructor() {
         this.pool = mysql.createPool({
-            host: '127.0.0.1',        // Replace with your DB host
-            user: 'Kevin',     // Replace with your DB user
-            password: 'Merlika12345', // Replace with your DB password
-            database: 'poker', // Replace with your DB name
+            host: '',        // Replace with your DB host
+            user: '',     // Replace with your DB user
+            password: '', // Replace with your DB password
+            database: '', // Replace with your DB name
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0
