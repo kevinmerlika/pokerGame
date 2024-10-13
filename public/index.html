@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Game</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Welcome to the Poker Game</h1>
+    <div id="messages"></div>
+    <div id="playerHands"></div>
+    <div id="communityCards"></div>
+
+    <h2>Total Pot: <span id="totalPot">0</span></h2> <!-- Total Pot Display -->
+
+    <input type="number" id="betAmountInput" placeholder="Enter bet amount" />
+    <button id="betButton">Place Bet</button>
+    <button id="callButton">Call</button>
+    <button id="raiseButton">Raise</button>
+    <button id="foldButton">Fold</button>
+
+    <script>
+        const socket = io();
+
+        const playerName = prompt("Enter your name:");
+        if (playerName) {
+            socket.emit("joinGame", playerName);
+        }
+
+       // Update total pot when it changes
+    socket.on("totalPotUpdated", (totalPot) => {
+        document.getElementById("totalPot").textContent = totalPot; // Update total pot in the UI
+    });
+
+        socket.on("playerJoined", (playerName) => {
+            const message = document.createElement("p");
+            message.textContent = `${playerName} has joined the game.`;
+            document.getElementById("messages").appendChild(message);
+        });
+
+        socket.on("betPlaced", ({ playerName, betAmount }) => {
+            const message = document.createElement("p");
+            message.textContent = `${playerName} placed a bet of ${betAmount}.`;
+            document.getElementById("messages").appendChild(message);
+        });
+
+        // Add additional socket event handlers here for call, raise, fold, etc.
+
+        const betButton = document.getElementById("betButton");
+        const betAmountInput = document.getElementById("betAmountInput");
+        
+        betButton.onclick = () => {
+            const betAmount = parseInt(betAmountInput.value);
+            if (!isNaN(betAmount) && betAmount > 0) {
+                socket.emit("placeBet", betAmount);
+                betAmountInput.value = ''; // Clear input
+            } else {
+                alert("Please enter a valid bet amount.");
+            }
+        };
+
+        const callButton = document.getElementById("callButton");
+        callButton.onclick = () => {
+            socket.emit("call");
+        };
+
+        const raiseButton = document.getElementById("raiseButton");
+        raiseButton.onclick = () => {
+            const raiseAmount = parseInt(betAmountInput.value);
+            if (!isNaN(raiseAmount) && raiseAmount > 0) {
+                socket.emit("raise", raiseAmount);
+                betAmountInput.value = ''; // Clear input
+            } else {
+                alert("Please enter a valid raise amount.");
+            }
+        };
+
+        const foldButton = document.getElementById("foldButton");
+        foldButton.onclick = () => {
+            socket.emit("fold");
+        };
+
+
+        // Listen for the game end and restart automatically
+    socket.on("gameEnded", ({ winner, pot }) => {
+        const message = document.createElement("p");
+        message.textContent = `${winner} won the pot of ${pot}. The game will restart soon.`;
+        document.getElementById("messages").appendChild(message);
+    });
+
+
+         // Handle game restarting
+    socket.on("gameRestarted", () => {
+        const message = document.createElement("p");
+        message.textContent = `The game has restarted.`;
+        document.getElementById("messages").appendChild(message);
+
+        // Clear hands and community cards for a fresh start
+        document.getElementById("playerHands").innerHTML = '';
+        document.getElementById("communityCards").innerHTML = '';
+        document.getElementById("totalPot").textContent = '0';
+    });
+        
+
+        socket.on("cardsDealt", ({ players, communityCards }) => {
+            document.getElementById("playerHands").innerHTML = '';
+            players.forEach(player => {
+                const playerHand = document.createElement("p");
+                playerHand.textContent = `${player.name}'s hand: ${player.hand.join(", ")}`;
+                document.getElementById("playerHands").appendChild(playerHand);
+            });
+
+            const communityHand = document.createElement("p");
+            communityHand.textContent = `Community Cards: ${communityCards.join(", ")}`;
+            document.getElementById("communityCards").appendChild(communityHand);
+        });
+
+        // Example of dealing cards after 5 seconds
+        setTimeout(() => {
+            socket.emit("dealCards");
+        }, 8000);
+    </script>
+</body>
+</html>
